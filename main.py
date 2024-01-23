@@ -16,13 +16,14 @@ def detect_objects():
             return jsonify({'error': 'No file provided'}), 400
 
         image = request.files['file'].read()
+
         img_array = cv2.imdecode(np.frombuffer(image, np.uint8), -1)
 
         boxes = detect_objects_yolo(img_array)
-
+        print('boxes: ',boxes)
         annotated_image = annotate_image(img_array, boxes)
 
-        _, img_encoded = cv2.imencode('.png', annotated_image)
+        _, img_encoded = cv2.imencode('.jpeg', annotated_image)
         img_encoded_compressed = zlib.compress(img_encoded.tobytes())
 
         def generate():
@@ -32,7 +33,7 @@ def detect_objects():
 
         headers = {
             'Content-Type': 'application/octet-stream',
-            'Content-Disposition': 'inline; filename=image.png'
+            'Content-Disposition': 'inline; filename=image.jpeg'
         }
 
         return Response(generate(), content_type='application/octet-stream', headers=headers), 200
@@ -49,6 +50,7 @@ def detect_objects_yolo(image):
     output_layer_names = net.getUnconnectedOutLayersNames()
 
     detections = net.forward(output_layer_names)
+    # print('detections: ',detections)
 
     boxes = []
     confidences = []
@@ -56,11 +58,19 @@ def detect_objects_yolo(image):
 
     for detection in detections:
         for obj in detection:
-            scores = obj[5:]
-            class_id = np.argmax(scores)
-            confidence = scores[class_id]
+            # print('obj: ',obj)
 
-            if confidence > 0.5:
+            scores = obj[4:]
+            # print('scores: ',scores)
+
+            class_id = np.argmax(scores)
+            # print('class_id: ',class_id)
+
+            confidence = scores[class_id]
+            # print('confidence: ',confidence)
+            # print('boxes: ',boxes)
+            
+            if confidence > 0.1:
                 center_x = int(obj[0] * width)
                 center_y = int(obj[1] * height)
                 w = int(obj[2] * width)

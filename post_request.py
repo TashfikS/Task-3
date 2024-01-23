@@ -3,7 +3,8 @@ import io
 from PIL import Image
 import zlib
 
-response = requests.post('http://localhost:5000/detect_objects', files={'file': open('E:/Code/Task03/ds_task_3/training/memory/out1.png', 'rb')})
+response = requests.post('http://localhost:5000/detect_objects', 
+                         files={'file': open('E:\Code\Task03\images4.jpeg', 'rb')})
 binary_data = response.content
 
 decompressed_data = zlib.decompress(binary_data)
